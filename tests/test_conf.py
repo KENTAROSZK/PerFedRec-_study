@@ -6,7 +6,7 @@ import pytest
 # Add the parent directory of PerFedRec++ to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../PerFedRec++')))
 
-from util.conf import ModelConf
+from util.conf import ModelConf, OptionConf
 
 @pytest.fixture
 def create_temp_conf_file(tmp_path):
@@ -80,4 +80,68 @@ key3=value3
     # Given the current code, it prints and exits, so we'll test for SystemExit.
     with pytest.raises(ValueError):
         ModelConf(str(invalid_conf_file))
+
+def test_option_conf_main_option_on():
+    """
+    Test OptionConf with 'on' as the main option.
+    """
+    option_str = "on -key1 val1 -key2 val2"
+    conf = OptionConf(option_str)
+    assert conf.is_main_on()
+    assert conf.contain("-key1")
+    assert conf["-key1"] == "val1"
+    assert conf.contain("-key2")
+    assert conf["-key2"] == "val2"
+
+def test_option_conf_main_option_off():
+    """
+    Test OptionConf with 'off' as the main option.
+    """
+    option_str = "off -keyA valueA -keyB valueB"
+    conf = OptionConf(option_str)
+    assert not conf.is_main_on()
+    assert conf.contain("-keyA")
+    assert conf["-keyA"] == "valueA"
+    assert conf.contain("-keyB")
+    assert conf["-keyB"] == "valueB"
+
+def test_option_conf_multiple_values():
+    """
+    Test OptionConf with options having multiple values.
+    """
+    option_str = "on -path /usr/local/bin -name myapp"
+    conf = OptionConf(option_str)
+    assert conf.is_main_on()
+    assert conf.contain("-path")
+    assert conf["-path"] == "/usr/local/bin"
+    assert conf.contain("-name")
+    assert conf["-name"] == "myapp"
+
+def test_option_conf_no_value():
+    """
+    Test OptionConf with an option having no explicit value (should default to 1).
+    """
+    option_str = "on -flag"
+    conf = OptionConf(option_str)
+    assert conf.is_main_on()
+    assert conf.contain("-flag")
+    assert conf["-flag"] == "1"
+
+def test_option_conf_keys_method():
+    """
+    Test the keys() method of OptionConf.
+    """
+    option_str = "on -key1 val1 -key2 val2"
+    conf = OptionConf(option_str)
+    expected_keys = {"-key1", "-key2"}
+    assert set(conf.keys()) == expected_keys
+
+def test_option_conf_getitem_invalid_key():
+    """
+    Test __getitem__ with an invalid key, expecting SystemExit.
+    """
+    option_str = "on -key1 val1"
+    conf = OptionConf(option_str)
+    with pytest.raises(SystemExit):
+        _ = conf["-nonexistent"]
 

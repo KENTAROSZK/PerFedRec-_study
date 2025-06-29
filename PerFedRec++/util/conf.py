@@ -52,10 +52,11 @@ class OptionConf(object):
                     if j == len(self.line[ind:])-1:
                         ind=j+1
                         break
-                try:
-                    self.options[item] = ' '.join(self.line[i+1:i+1+ind])
-                except IndexError:
-                    self.options[item] = 1
+                values = self.line[i+1:i+1+ind]
+                if not values: # If no values are found for the option
+                    self.options[item] = '1' # Set a default value, e.g., '1' or True
+                else:
+                    self.options[item] = ' '.join(values)
 
     def __getitem__(self, item):
         if not self.contain(item):
